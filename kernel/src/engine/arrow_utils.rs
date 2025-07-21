@@ -58,6 +58,8 @@ macro_rules! prim_array_cmp {
 
 pub(crate) use prim_array_cmp;
 
+use super::cast::cast_record_batch;
+
 /// Get the indices in `parquet_schema` of the specified columns in `requested_schema`. This
 /// returns a tuples of (mask_indices: Vec<parquet_schema_index>, reorder_indices:
 /// Vec<requested_index>). `mask_indices` is used for generating the mask for reading from the
@@ -72,12 +74,17 @@ pub(crate) fn make_arrow_error(s: impl Into<String>) -> Error {
 /// ensure schema compatibility, as well as `fix_nested_null_masks` to ensure that leaf columns have
 /// accurate null masks that row visitors rely on for correctness.
 pub(crate) fn fixup_parquet_read<T>(
-    batch: RecordBatch,
+    mut batch: RecordBatch,
+    target_schema: &SchemaRef,
     requested_ordering: &[ReorderIndex],
 ) -> DeltaResult<T>
 where
     StructArray: Into<T>,
 {
+    let target_schema = Arc::new(target_schema.as_ref().try_into_arrow()?);
+    if !batch.schema().eq(&target_schema) {
+        batch = cast_record_batch(&batch, target_schema.clone(), false, false)?
+    };
     let data = reorder_struct_array(batch.into(), requested_ordering)?;
     let data = fix_nested_null_masks(data);
     Ok(data.into())

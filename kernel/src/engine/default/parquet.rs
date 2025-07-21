@@ -318,7 +318,8 @@ impl FileOpener for ParquetOpener {
 
             let stream = builder.with_batch_size(batch_size).build()?;
 
-            let stream = stream.map(move |rbr| fixup_parquet_read(rbr?, &requested_ordering));
+            let stream =
+                stream.map(move |rbr| fixup_parquet_read(rbr?, &table_schema, &requested_ordering));
             Ok(stream.boxed())
         }))
     }
@@ -387,7 +388,8 @@ impl FileOpener for PresignedUrlOpener {
             let reader = builder.with_batch_size(batch_size).build()?;
 
             let stream = futures::stream::iter(reader);
-            let stream = stream.map(move |rbr| fixup_parquet_read(rbr?, &requested_ordering));
+            let stream =
+                stream.map(move |rbr| fixup_parquet_read(rbr?, &table_schema, &requested_ordering));
             Ok(stream.boxed())
         }))
     }

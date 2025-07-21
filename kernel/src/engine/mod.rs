@@ -4,6 +4,8 @@
 
 #[cfg(feature = "arrow-conversion")]
 pub mod arrow_conversion;
+#[cfg(feature = "arrow-conversion")]
+pub(crate) mod cast;
 
 #[cfg(all(feature = "arrow-expression", feature = "default-engine-base"))]
 pub mod arrow_expression;

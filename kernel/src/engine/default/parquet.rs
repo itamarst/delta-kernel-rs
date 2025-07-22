@@ -297,6 +297,16 @@ impl FileOpener for ParquetOpener {
             let parquet_schema = metadata.schema();
             let (indices, requested_ordering) =
                 get_requested_indices(&table_schema, parquet_schema)?;
+            println!(
+                "PARQUET SCHEMA {:?}",
+                parquet_schema
+                    .fields
+                    .iter()
+                    .map(|f| f.name().clone())
+                    .collect::<Vec<_>>()
+            );
+
+            println!("INDICES {indices:?}");
             let options = ArrowReaderOptions::new(); //.with_page_index(enable_page_index);
             let mut builder =
                 ParquetRecordBatchStreamBuilder::new_with_options(reader, options).await?;

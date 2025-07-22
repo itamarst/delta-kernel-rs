@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 use crate::DeltaResult;
 
-fn cast_struct(
+pub fn cast_struct(
     struct_array: &StructArray,
     fields: &Fields,
     cast_options: &CastOptions,

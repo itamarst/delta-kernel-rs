@@ -5,6 +5,7 @@ use std::io::{BufRead, BufReader};
 use std::sync::Arc;
 
 use crate::engine::arrow_conversion::{TryFromKernel as _, TryIntoArrow as _};
+use crate::engine::cast::cast_struct;
 use crate::engine::ensure_data_types::DataTypeCompat;
 use crate::{
     engine::arrow_data::ArrowEngineData,
@@ -81,11 +82,34 @@ pub(crate) fn fixup_parquet_read<T>(
 where
     StructArray: Into<T>,
 {
-    let target_schema = Arc::new(target_schema.as_ref().try_into_arrow()?);
-    if !batch.schema().eq(&target_schema) {
-        batch = cast_record_batch(&batch, target_schema.clone(), false, false)?
-    };
+    println!("REQUESTED ORDERING {requested_ordering:?}");
+    println!(
+        "TARGET SCHEMA: {:?}",
+        target_schema
+            .fields()
+            .map(|f| f.name.clone())
+            .collect::<Vec<_>>()
+    );
+    let target_schema: ArrowSchemaRef = Arc::new(target_schema.as_ref().try_into_arrow()?);
+    println!(
+        "BATCH SCHEMA {:?}",
+        &batch
+            .schema()
+            .fields()
+            .iter()
+            .map(|f| f.name().clone())
+            .collect::<Vec<_>>()
+    );
+    // if !batch.schema().eq(&target_schema) {
+    //     batch = cast_record_batch(&batch, target_schema.clone(), false, false)?
+    // };
+
     let data = reorder_struct_array(batch.into(), requested_ordering)?;
+    let cast_options = crate::arrow::compute::CastOptions {
+        safe: false,
+        ..Default::default()
+    };
+    let data = cast_struct(&data, target_schema.fields(), &cast_options, false)?;
     let data = fix_nested_null_masks(data);
     Ok(data.into())
 }

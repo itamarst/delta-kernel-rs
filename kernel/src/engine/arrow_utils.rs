@@ -104,12 +104,18 @@ where
     //     batch = cast_record_batch(&batch, target_schema.clone(), false, false)?
     // };
 
-    let data = reorder_struct_array(batch.into(), requested_ordering)?;
+    let need_to_cast = batch.schema() == target_schema;
+
+    // The reordering is based on the original uncast data, so we need to do
+    // that before casting.
+    let mut data = reorder_struct_array(batch.into(), requested_ordering)?;
     let cast_options = crate::arrow::compute::CastOptions {
-        safe: false,
+        safe: true,
         ..Default::default()
     };
-    let data = cast_struct(&data, target_schema.fields(), &cast_options, false)?;
+    if need_to_cast {
+        data = cast_struct(&data, target_schema.fields(), &cast_options, false)?;
+    }
     let data = fix_nested_null_masks(data);
     Ok(data.into())
 }

@@ -91,7 +91,7 @@ pub(crate) fn validate_clustering_columns(
             dt => {
                 return Err(Error::generic(format!(
                     "Clustering column '{}' has unsupported type '{}'. \
-                     Supported types: Byte, Short, Integer, Long, Float, Double, \
+                     Supported types: Byte, Short, Integer, Long, Float16, Float, Double, \
                      Decimal, Date, Timestamp, TimestampNtz, String",
                     col, dt
                 )));
@@ -321,6 +321,7 @@ mod tests {
             StructField::new("short_col", DataType::SHORT, false),
             StructField::new("int_col", DataType::INTEGER, false),
             StructField::new("long_col", DataType::LONG, false),
+            StructField::new("float16_col", DataType::FLOAT16, false),
             StructField::new("float_col", DataType::FLOAT, false),
             StructField::new("double_col", DataType::DOUBLE, false),
             StructField::new("date_col", DataType::DATE, false),

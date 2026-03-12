@@ -129,7 +129,7 @@ is the source of truth. Key concepts:
   `allowColumnDefaults`, `changeDataFeed`, `identityColumns`, `rowTracking`,
   `domainMetadata`, `icebergCompatV1`, `icebergCompatV2`, `clustering`,
   `inCommitTimestamp`
-- Reader + writer: `columnMapping`, `deletionVectors`, `timestampNtz`,
+- Reader + writer: `columnMapping`, `deletionVectors`, `float16`, `timestampNtz`,
   `v2Checkpoint`, `vacuumProtocolCheck`, `variantType`, `variantType-preview`,
   `typeWidening`
 

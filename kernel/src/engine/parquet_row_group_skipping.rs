@@ -8,6 +8,7 @@ use crate::parquet::file::statistics::Statistics;
 use crate::parquet::schema::types::ColumnDescPtr;
 use crate::schema::{DataType, DecimalType, PrimitiveType};
 use chrono::{DateTime, Days};
+use half::f16;
 use std::collections::HashMap;
 use tracing::debug;
 
@@ -98,6 +99,11 @@ impl<'a> RowGroupFilter<'a> {
         let timestamp = timestamp.signed_duration_since(DateTime::UNIX_EPOCH);
         Some(Scalar::TimestampNtz(timestamp.num_microseconds()?))
     }
+
+    fn float16_from_bytes(bytes: Option<&[u8]>) -> Option<Scalar> {
+        let bytes: [u8; 2] = bytes?.try_into().ok()?;
+        Some(Scalar::Float16(f16::from_le_bytes(bytes)))
+    }
 }
 
 impl ParquetStatsProvider for RowGroupFilter<'_> {
@@ -121,6 +127,10 @@ impl ParquetStatsProvider for RowGroupFilter<'_> {
             (Short, _) => return None,
             (Byte, Statistics::Int32(s)) => (*s.min_opt()? as i8).into(),
             (Byte, _) => return None,
+            (Float16, Statistics::FixedLenByteArray(s)) => {
+                Self::float16_from_bytes(s.min_bytes_opt())?
+            }
+            (Float16, _) => return None,
             (Float, Statistics::Float(s)) => s.min_opt()?.into(),
             (Float, _) => return None,
             (Double, Statistics::Double(s)) => s.min_opt()?.into(),
@@ -167,6 +177,10 @@ impl ParquetStatsProvider for RowGroupFilter<'_> {
             (Short, _) => return None,
             (Byte, Statistics::Int32(s)) => (*s.max_opt()? as i8).into(),
             (Byte, _) => return None,
+            (Float16, Statistics::FixedLenByteArray(s)) => {
+                Self::float16_from_bytes(s.max_bytes_opt())?
+            }
+            (Float16, _) => return None,
             (Float, Statistics::Float(s)) => s.max_opt()?.into(),
             (Float, _) => return None,
             (Double, Statistics::Double(s)) => s.max_opt()?.into(),

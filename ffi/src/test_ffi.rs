@@ -17,6 +17,7 @@ use delta_kernel::kernel_predicates::{
 };
 use delta_kernel::schema::{ArrayType, DataType, MapType, StructField, StructType};
 use delta_kernel::DeltaResult;
+use half::f16;
 
 #[derive(Debug, PartialEq)]
 struct OpaqueTestOp(String);
@@ -130,6 +131,8 @@ pub unsafe extern "C" fn get_testing_kernel_expression() -> Handle<SharedExpress
         column_expr!("col"),
         Expr::literal(i8::MAX),
         Expr::literal(i8::MIN),
+        Expr::literal(f16::MAX),
+        Expr::literal(f16::MIN),
         Expr::literal(f32::MAX),
         Expr::literal(f32::MIN),
         Expr::literal(f64::MAX),
@@ -243,6 +246,7 @@ pub unsafe extern "C" fn get_simple_testing_kernel_expression() -> Handle<Shared
         Expr::literal(42i32),
         Expr::literal(100i64),
         Expr::literal(2.5f64), // Using 2.5 to avoid clippy::approx_constant warning
+        Expr::literal(f16(2.5))
         Expr::literal(true),
         Expr::literal(false),
         Expr::literal("test string"),

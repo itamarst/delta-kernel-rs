@@ -181,6 +181,24 @@ pub unsafe extern "C" fn visit_field_byte(
         .into_extern_result(&allocate_error)
 }
 
+/// Visit a float field. Float fields store 16-bit floating point numbers.
+///
+/// # Safety
+///
+/// Caller is responsible for providing a valid `state`, `name` slice with valid UTF-8 data,
+/// and `allocate_error` function pointer.
+#[no_mangle]
+pub unsafe extern "C" fn visit_field_float16(
+    state: &mut KernelSchemaVisitorState,
+    name: KernelStringSlice,
+    nullable: bool,
+    allocate_error: AllocateErrorFn,
+) -> ExternResult<usize> {
+    let name_str = unsafe { TryFromStringSlice::try_from_slice(&name) };
+    visit_field_primitive_impl(state, name_str, PrimitiveType::Float16, nullable)
+        .into_extern_result(&allocate_error)
+}
+
 /// Visit a float field. Float fields store 32-bit floating point numbers.
 ///
 /// # Safety
@@ -747,6 +765,7 @@ mod tests {
         //   col_byte: byte,
         //   col_double: double,
         //   col_float: float,
+        //   col_float16: f16,
         //   col_boolean: boolean,
         //   col_binary: binary,
         //   col_date: date,
@@ -768,6 +787,7 @@ mod tests {
         let col_short = visit_field!(short, state, "col_short", false);
         let col_byte = visit_field!(byte, state, "col_byte", false);
         let col_double = visit_field!(double, state, "col_double", false);
+        let col_float16 = visit_field!(float, state, "col_float16", false);
         let col_float = visit_field!(float, state, "col_float", false);
         let col_boolean = visit_field!(boolean, state, "col_boolean", false);
         let col_binary = visit_field!(binary, state, "col_binary", false);
@@ -813,6 +833,7 @@ mod tests {
             col_byte,
             col_double,
             col_float,
+            col_float16,
             col_boolean,
             col_binary,
             col_date,
@@ -848,6 +869,7 @@ mod tests {
             ("col_short", PrimitiveType::Short),
             ("col_byte", PrimitiveType::Byte),
             ("col_double", PrimitiveType::Double),
+            ("col_float16", PrimitiveType::Float),
             ("col_float", PrimitiveType::Float),
             ("col_boolean", PrimitiveType::Boolean),
             ("col_binary", PrimitiveType::Binary),

@@ -28,6 +28,7 @@ delta_kernel = { path = "../kernel", default-features = false, features = [
 delta_kernel_ffi_macros = { path = "../ffi-proc-macros", version = "0.20.0" }
 uc-client = { path = "../uc-client", optional = true }
 uc-catalog = { path = "../uc-catalog", optional = true }
+half = "2.7.1"
 
 [build-dependencies]
 cbindgen = "0.29.2"

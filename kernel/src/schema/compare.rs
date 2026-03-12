@@ -442,6 +442,24 @@ mod tests {
     }
 
     #[test]
+    fn type_widening_float16() {
+        // float16 -> double
+        assert!(DataType::FLOAT16.can_read_as(&DataType::DOUBLE).is_ok());
+        // float16 -> float
+        assert!(DataType::FLOAT16.can_read_as(&DataType::FLOAT).is_ok());
+
+        // Cannot narrow
+        assert!(matches!(
+            DataType::DOUBLE.can_read_as(&DataType::FLOAT16),
+            Err(Error::TypeMismatch)
+        ));
+        assert!(matches!(
+            DataType::FLOAT.can_read_as(&DataType::FLOAT16),
+            Err(Error::TypeMismatch)
+        ));
+    }
+
+    #[test]
     fn type_widening_in_struct() {
         let source = StructType::new_unchecked([
             StructField::new("id", DataType::INTEGER, false),

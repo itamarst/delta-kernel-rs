@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
+use half::f16;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
@@ -229,6 +230,8 @@ pub enum Scalar {
     Short(i16),
     /// 8bit integer
     Byte(i8),
+    // 16bit floating point
+    Float16(f16),
     /// 32bit floating point
     Float(f32),
     /// 64bit floating point
@@ -264,6 +267,7 @@ impl Scalar {
             Self::Long(_) => DataType::LONG,
             Self::Short(_) => DataType::SHORT,
             Self::Byte(_) => DataType::BYTE,
+            Self::Float16(_) => DataType::FLOAT16,
             Self::Float(_) => DataType::FLOAT,
             Self::Double(_) => DataType::DOUBLE,
             Self::String(_) => DataType::STRING,
@@ -362,6 +366,7 @@ impl Display for Scalar {
             Self::Long(i) => write!(f, "{i}"),
             Self::Short(i) => write!(f, "{i}"),
             Self::Byte(i) => write!(f, "{i}"),
+            Self::Float16(fl) => write!(f, "{fl}"),
             Self::Float(fl) => write!(f, "{fl}"),
             Self::Double(fl) => write!(f, "{fl}"),
             Self::String(s) => write!(f, "'{s}'"),
@@ -473,6 +478,8 @@ impl Scalar {
             (Short(_), _) => None,
             (Byte(a), Byte(b)) => a.partial_cmp(b),
             (Byte(_), _) => None,
+            (Float16(a), Float16(b)) => a.partial_cmp(b),
+            (Float16(_), _) => None,
             (Float(a), Float(b)) => a.partial_cmp(b),
             (Float(_), _) => None,
             (Double(a), Double(b)) => a.partial_cmp(b),
@@ -522,6 +529,12 @@ impl From<i32> for Scalar {
 impl From<i64> for Scalar {
     fn from(i: i64) -> Self {
         Self::Long(i)
+    }
+}
+
+impl From<f16> for Scalar {
+    fn from(i: f16) -> Self {
+        Self::Float16(i)
     }
 }
 
@@ -708,6 +721,7 @@ impl PrimitiveType {
             Short => self.parse_str_as_scalar(raw, Scalar::Short),
             Integer => self.parse_str_as_scalar(raw, Scalar::Integer),
             Long => self.parse_str_as_scalar(raw, Scalar::Long),
+            Float16 => self.parse_str_as_scalar(raw, Scalar::Float16),
             Float => self.parse_str_as_scalar(raw, Scalar::Float),
             Double => self.parse_str_as_scalar(raw, Scalar::Double),
             Boolean => {

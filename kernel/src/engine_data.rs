@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::ops::Range;
 
+use half::f16;
 use tracing::debug;
 
 use crate::expressions::ArrayData;
@@ -227,6 +228,7 @@ pub trait GetData<'a> {
         (get_bool, bool),
         (get_int, i32),
         (get_long, i64),
+        (get_float16, f16),
         (get_float, f32),
         (get_double, f64),
         (get_date, i32),
@@ -254,6 +256,7 @@ impl<'a> GetData<'a> for () {
         (get_bool, bool),
         (get_int, i32),
         (get_long, i64),
+        (get_float16, f16),
         (get_float, f32),
         (get_double, f64),
         (get_date, i32),
@@ -297,6 +300,7 @@ impl_typed_get_data!(
     (get_bool, bool),
     (get_int, i32),
     (get_long, i64),
+    (get_float16, f16),
     (get_float, f32),
     (get_double, f64),
     (get_decimal, i128),

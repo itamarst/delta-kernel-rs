@@ -1467,6 +1467,8 @@ pub enum PrimitiveType {
     Short,
     /// i8: 1-byte signed integer number. Range: -128 to 127
     Byte,
+    /// f16: 2-byte half-precision floating-point numbers
+    Float16,
     /// f32: 4-byte single-precision floating-point numbers
     Float,
     /// f64: 8-byte double-precision floating-point numbers
@@ -1506,6 +1508,8 @@ impl PrimitiveType {
                 | (Integer, Long)
                 // Float widening: float can be read as double
                 | (Float, Double)
+                | (Float16, Float)
+                | (Float16, Double)
                 // Timestamp equivalence: both are i64 microseconds since epoch, differing only
                 // in timezone semantics. The parquet representation is identical, so reading
                 // one as the other is safe at the data layer.
@@ -1626,6 +1630,7 @@ impl Display for PrimitiveType {
             PrimitiveType::Integer => write!(f, "integer"),
             PrimitiveType::Short => write!(f, "short"),
             PrimitiveType::Byte => write!(f, "byte"),
+            PrimitiveType::Float16 => write!(f, "float16"),
             PrimitiveType::Float => write!(f, "float"),
             PrimitiveType::Double => write!(f, "double"),
             PrimitiveType::Boolean => write!(f, "boolean"),
@@ -1760,6 +1765,7 @@ impl DataType {
     pub const INTEGER: Self = DataType::Primitive(PrimitiveType::Integer);
     pub const SHORT: Self = DataType::Primitive(PrimitiveType::Short);
     pub const BYTE: Self = DataType::Primitive(PrimitiveType::Byte);
+    pub const FLOAT16: Self = DataType::Primitive(PrimitiveType::Float16);
     pub const FLOAT: Self = DataType::Primitive(PrimitiveType::Float);
     pub const DOUBLE: Self = DataType::Primitive(PrimitiveType::Double);
     pub const BOOLEAN: Self = DataType::Primitive(PrimitiveType::Boolean);

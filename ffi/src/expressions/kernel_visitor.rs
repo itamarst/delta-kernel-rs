@@ -7,6 +7,7 @@ use delta_kernel::expressions::{
     UnaryPredicateOp,
 };
 use delta_kernel::DeltaResult;
+use half::f16;
 
 use crate::expressions::{SharedExpression, SharedPredicate};
 use crate::handle::Handle;
@@ -300,6 +301,14 @@ pub extern "C" fn visit_expression_literal_short(
 pub extern "C" fn visit_expression_literal_byte(
     state: &mut KernelExpressionVisitorState,
     value: i8,
+) -> usize {
+    wrap_expression(state, Expression::literal(value))
+}
+
+#[no_mangle]
+pub extern "C" fn visit_expression_literal_float16(
+    state: &mut KernelExpressionVisitorState,
+    value: f16,
 ) -> usize {
     wrap_expression(state, Expression::literal(value))
 }

@@ -23,6 +23,7 @@ pub(crate) use column_mapping::{
     get_column_mapping_mode_from_properties,
 };
 pub(crate) use timestamp_ntz::validate_timestamp_ntz_feature_support;
+// TODO do equivalent for float16 -^
 mod column_mapping;
 mod timestamp_ntz;
 

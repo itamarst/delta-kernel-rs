@@ -786,7 +786,7 @@ mod tests {
         let col_short = visit_field!(short, state, "col_short", false);
         let col_byte = visit_field!(byte, state, "col_byte", false);
         let col_double = visit_field!(double, state, "col_double", false);
-        let col_float16 = visit_field!(float, state, "col_float16", false);
+        let col_float16 = visit_field!(float16, state, "col_float16", false);
         let col_float = visit_field!(float, state, "col_float", false);
         let col_boolean = visit_field!(boolean, state, "col_boolean", false);
         let col_binary = visit_field!(binary, state, "col_binary", false);
@@ -832,12 +832,12 @@ mod tests {
             col_byte,
             col_double,
             col_float,
-            col_float16,
             col_boolean,
             col_binary,
             col_date,
             col_timestamp,
             col_timestamp_ntz,
+            col_float16,
             col_decimal,
             col_array,
             col_map,
@@ -858,7 +858,7 @@ mod tests {
         // Verify the schema
         let schema = extract_kernel_schema(&mut state, schema_id).unwrap();
         let fields: Vec<_> = schema.fields().collect();
-        assert_eq!(fields.len(), 17);
+        assert_eq!(fields.len(), 18);
 
         // Validate the primitive fields
         let primitive_field_expectations = [
@@ -868,13 +868,13 @@ mod tests {
             ("col_short", PrimitiveType::Short),
             ("col_byte", PrimitiveType::Byte),
             ("col_double", PrimitiveType::Double),
-            ("col_float16", PrimitiveType::Float),
             ("col_float", PrimitiveType::Float),
             ("col_boolean", PrimitiveType::Boolean),
             ("col_binary", PrimitiveType::Binary),
             ("col_date", PrimitiveType::Date),
             ("col_timestamp", PrimitiveType::Timestamp),
             ("col_timestamp_ntz", PrimitiveType::TimestampNtz),
+            ("col_float16", PrimitiveType::Float16),
         ];
 
         for (index, (expected_name, expected_type)) in
@@ -888,25 +888,25 @@ mod tests {
             assert!(!fields[index].is_nullable());
         }
 
-        assert_eq!(fields[12].name(), "col_decimal");
-        let DataType::Primitive(PrimitiveType::Decimal(decimal_type)) = fields[12].data_type()
+        assert_eq!(fields[13].name(), "col_decimal");
+        let DataType::Primitive(PrimitiveType::Decimal(decimal_type)) = fields[13].data_type()
         else {
             panic!("Field col_decimal is not a decimal type");
         };
         assert_eq!(decimal_type.precision(), 10);
         assert_eq!(decimal_type.scale(), 2);
 
-        assert_eq!(fields[13].name(), "col_array");
-        assert_array(fields[13], DataType::STRING, false);
+        assert_eq!(fields[14].name(), "col_array");
+        assert_array(fields[14], DataType::STRING, false);
 
-        assert_eq!(fields[14].name(), "col_map");
-        assert_map(fields[14], DataType::STRING, DataType::LONG, false);
+        assert_eq!(fields[15].name(), "col_map");
+        assert_map(fields[15], DataType::STRING, DataType::LONG, false);
 
-        assert_eq!(fields[15].name(), "col_struct");
-        assert_struct(fields[15], DataType::STRING, false);
+        assert_eq!(fields[16].name(), "col_struct");
+        assert_struct(fields[16], DataType::STRING, false);
 
-        assert_eq!(fields[16].name(), "col_variant");
-        let DataType::Variant(variant_type) = fields[16].data_type() else {
+        assert_eq!(fields[17].name(), "col_variant");
+        let DataType::Variant(variant_type) = fields[17].data_type() else {
             panic!("Expected variant type for col_variant");
         };
         let variant_fields: Vec<_> = variant_type.fields().collect();

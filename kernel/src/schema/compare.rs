@@ -477,6 +477,7 @@ mod tests {
         ));
     }
 
+    #[cfg(feature = "float16")]
     #[test]
     fn type_widening_float16() {
         // float16 -> double

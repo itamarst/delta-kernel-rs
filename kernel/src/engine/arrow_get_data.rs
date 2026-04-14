@@ -1,12 +1,15 @@
 use std::ops::Range;
 
+#[cfg(feature = "float16")]
 use half::f16;
 
 use crate::arrow::array::cast::AsArray;
+#[cfg(feature = "float16")]
+use crate::arrow::array::types::Float16Type;
 use crate::arrow::array::{
     types::{
-        Date32Type, Decimal128Type, Float16Type, Float32Type, Float64Type, GenericBinaryType,
-        GenericStringType, Int32Type, Int64Type, TimestampMicrosecondType,
+        Date32Type, Decimal128Type, Float32Type, Float64Type, GenericBinaryType, GenericStringType,
+        Int32Type, Int64Type, TimestampMicrosecondType,
     },
     Array, BinaryViewArray, BooleanArray, GenericByteArray, GenericListArray, GenericListViewArray,
     MapArray, OffsetSizeTrait, PrimitiveArray, RunArray, StringViewArray,
@@ -38,6 +41,7 @@ impl GetData<'_> for PrimitiveArray<Int64Type> {
     }
 }
 
+#[cfg(feature = "float16")]
 impl GetData<'_> for PrimitiveArray<Float16Type> {
     fn get_float16(&self, row_index: usize, _field_name: &str) -> DeltaResult<Option<f16>> {
         Ok(self.is_valid(row_index).then(|| self.value(row_index)))

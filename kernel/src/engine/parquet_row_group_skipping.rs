@@ -10,6 +10,7 @@ use crate::parquet::file::statistics::Statistics;
 use crate::parquet::schema::types::ColumnDescPtr;
 use crate::schema::{DataType, DecimalType, PrimitiveType};
 use chrono::{DateTime, Days};
+#[cfg(feature = "float16")]
 use half::f16;
 use std::collections::HashMap;
 use tracing::debug;
@@ -133,8 +134,10 @@ fn extract_min_scalar(data_type: &DataType, stats: &Statistics) -> Option<Scalar
         (Short, _) => return None,
         (Byte, Statistics::Int32(s)) => (*s.min_opt()? as i8).into(),
         (Byte, _) => return None,
+        #[cfg(feature = "float16")]
         // TODO validate out how float16 statistics are stored
         (Float16, Statistics::Float(s)) => s.min_opt()?.into(),
+        #[cfg(feature = "float16")]
         (Float16, _) => return None,
         (Float, Statistics::Float(s)) => s.min_opt()?.into(),
         (Float, _) => return None,
@@ -180,8 +183,10 @@ fn extract_max_scalar(data_type: &DataType, stats: &Statistics) -> Option<Scalar
         (Short, _) => return None,
         (Byte, Statistics::Int32(s)) => (*s.max_opt()? as i8).into(),
         (Byte, _) => return None,
+        #[cfg(feature = "float16")]
         // TODO validate out how float16 statistics are stored
         (Float16, Statistics::Float(s)) => s.min_opt()?.into(),
+        #[cfg(feature = "float16")]
         (Float16, _) => return None,
         (Float, Statistics::Float(s)) => s.max_opt()?.into(),
         (Float, _) => return None,
@@ -239,12 +244,6 @@ fn timestamp_from_date(days: Option<&i32>) -> Option<Scalar> {
     let timestamp = DateTime::UNIX_EPOCH.checked_add_days(Days::new(days))?;
     let timestamp = timestamp.signed_duration_since(DateTime::UNIX_EPOCH);
     Some(Scalar::TimestampNtz(timestamp.num_microseconds()?))
-}
-
-// TODO might be necessary depending how stats are stored...
-fn float16_from_bytes(bytes: Option<&[u8]>) -> Option<Scalar> {
-    let bytes: [u8; 2] = bytes?.try_into().ok()?;
-    Some(Scalar::Float16(f16::from_le_bytes(bytes)))
 }
 
 /// Given a predicate of interest and a set of parquet column descriptors, build a column ->

@@ -15,6 +15,7 @@
 #![allow(dead_code)] // callers are in a later PR in the stack
 
 use chrono::{DateTime, NaiveDate, Utc};
+#[cfg(feature = "float16")]
 use half::f16;
 
 use crate::expressions::{DecimalData, Scalar};
@@ -67,6 +68,7 @@ pub(crate) fn serialize_partition_value(value: &Scalar) -> DeltaResult<Option<St
         Scalar::Short(v) => Ok(Some(v.to_string())),
         Scalar::Integer(v) => Ok(Some(v.to_string())),
         Scalar::Long(v) => Ok(Some(v.to_string())),
+        #[cfg(feature = "float16")]
         Scalar::Float16(v) => Ok(Some(format_f16(*v))),
         Scalar::Float(v) => Ok(Some(format_f32(*v))),
         Scalar::Double(v) => Ok(Some(format_f64(*v))),
@@ -135,6 +137,7 @@ macro_rules! format_java_float {
     }};
 }
 
+#[cfg(feature = "float16")]
 fn format_f16(v: f16) -> String {
     let v: f32 = v.into();
     format_java_float!(v)

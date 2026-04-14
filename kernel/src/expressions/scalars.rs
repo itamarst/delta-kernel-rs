@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
+#[cfg(feature = "float16")]
 use half::f16;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -230,7 +231,8 @@ pub enum Scalar {
     Short(i16),
     /// 8bit integer
     Byte(i8),
-    // 16bit floating point
+    #[cfg(feature = "float16")]
+    /// 16bit floating point
     Float16(f16),
     /// 32bit floating point
     Float(f32),
@@ -267,6 +269,7 @@ impl Scalar {
             Self::Long(_) => DataType::LONG,
             Self::Short(_) => DataType::SHORT,
             Self::Byte(_) => DataType::BYTE,
+            #[cfg(feature = "float16")]
             Self::Float16(_) => DataType::FLOAT16,
             Self::Float(_) => DataType::FLOAT,
             Self::Double(_) => DataType::DOUBLE,
@@ -366,6 +369,7 @@ impl Display for Scalar {
             Self::Long(i) => write!(f, "{i}"),
             Self::Short(i) => write!(f, "{i}"),
             Self::Byte(i) => write!(f, "{i}"),
+            #[cfg(feature = "float16")]
             Self::Float16(fl) => write!(f, "{fl}"),
             Self::Float(fl) => write!(f, "{fl}"),
             Self::Double(fl) => write!(f, "{fl}"),
@@ -478,7 +482,9 @@ impl Scalar {
             (Short(_), _) => None,
             (Byte(a), Byte(b)) => a.partial_cmp(b),
             (Byte(_), _) => None,
+            #[cfg(feature = "float16")]
             (Float16(a), Float16(b)) => a.partial_cmp(b),
+            #[cfg(feature = "float16")]
             (Float16(_), _) => None,
             (Float(a), Float(b)) => a.partial_cmp(b),
             (Float(_), _) => None,
@@ -532,6 +538,7 @@ impl From<i64> for Scalar {
     }
 }
 
+#[cfg(feature = "float16")]
 impl From<f16> for Scalar {
     fn from(i: f16) -> Self {
         Self::Float16(i)
@@ -721,6 +728,7 @@ impl PrimitiveType {
             Short => self.parse_str_as_scalar(raw, Scalar::Short),
             Integer => self.parse_str_as_scalar(raw, Scalar::Integer),
             Long => self.parse_str_as_scalar(raw, Scalar::Long),
+            #[cfg(feature = "float16")]
             Float16 => self.parse_str_as_scalar(raw, Scalar::Float16),
             Float => self.parse_str_as_scalar(raw, Scalar::Float),
             Double => self.parse_str_as_scalar(raw, Scalar::Double),

@@ -1274,6 +1274,7 @@ dependencies = [
  "delta_kernel",
  "delta_kernel_derive",
  "futures",
+ "half",
  "hdfs-native",
  "hdfs-native-object-store",
  "indexmap",
@@ -1343,6 +1344,7 @@ dependencies = [
  "delta-kernel-unity-catalog",
  "delta_kernel",
  "delta_kernel_ffi_macros",
+ "half",
  "itertools 0.14.0",
  "libc",
  "paste",
@@ -1814,6 +1816,7 @@ dependencies = [
  "cfg-if",
  "crunchy",
  "num-traits",
+ "serde",
  "zerocopy",
 ]
 

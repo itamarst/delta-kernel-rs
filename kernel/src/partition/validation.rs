@@ -157,6 +157,8 @@ fn validate_types(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "float16")]
+    use half::f16;
     use rstest::rstest;
 
     use crate::expressions::Scalar;
@@ -359,6 +361,18 @@ mod tests {
     #[case(DataType::STRING, Scalar::Null(DataType::STRING))] // row 66
     #[case(DataType::BINARY, Scalar::Null(DataType::BINARY))] // (binary NULL)
     fn test_validate_types_null_returns_ok(#[case] data_type: DataType, #[case] value: Scalar) {
+        assert_type_ok(data_type, value);
+    }
+
+    #[cfg(feature = "float16")]
+    /// Float16 validation.
+    #[rstest]
+    #[case(DataType::FLOAT16, Scalar::Float16(f16::from_f32(0.0)))]
+    #[case(DataType::FLOAT16, Scalar::Float16(f16::NAN))]
+    #[case(DataType::FLOAT16, Scalar::Float16(f16::INFINITY))]
+    #[case(DataType::FLOAT16, Scalar::Float16(f16::NEG_INFINITY))]
+    #[case(DataType::FLOAT16, Scalar::Null(DataType::FLOAT16))]
+    fn test_validate_float16_returns_ok(#[case] data_type: DataType, #[case] value: Scalar) {
         assert_type_ok(data_type, value);
     }
 

@@ -1356,6 +1356,40 @@ mod test {
         );
     }
 
+    #[cfg(feature = "float16")]
+    #[test]
+    fn test_float16_validation_integration() {
+        // Schema with FLOAT16 column
+        let schema = Arc::new(StructType::new_unchecked([StructField::nullable(
+            "f16",
+            DataType::FLOAT16,
+        )]));
+        let metadata = Metadata::try_new(None, None, schema, vec![], 0, HashMap::new()).unwrap();
+
+        let protocol_without_float16_features =
+            Protocol::try_new_modern(TableFeature::EMPTY_LIST, TableFeature::EMPTY_LIST).unwrap();
+
+        let protocol_with_float16_features =
+            Protocol::try_new_modern([TableFeature::Float16], [TableFeature::Float16]).unwrap();
+
+        let table_root = Url::try_from("file:///").unwrap();
+
+        let result = TableConfiguration::try_new(
+            metadata.clone(),
+            protocol_without_float16_features,
+            table_root.clone(),
+            0,
+        );
+        assert_result_error_with_message(result, "Unsupported: Table contains FLOAT16 columns but does not have the required 'float16' feature in reader and writer features");
+
+        let result =
+            TableConfiguration::try_new(metadata, protocol_with_float16_features, table_root, 0);
+        assert!(
+            result.is_ok(),
+            "Should succeed when FLOAT16 is used with required features"
+        );
+    }
+
     #[test]
     fn test_variant_validation_integration() {
         // Schema with VARIANT column

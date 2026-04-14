@@ -823,6 +823,21 @@ pub fn multiple_ntz_schema() -> SchemaRef {
     multi_schema_with_type(DataType::TIMESTAMP_NTZ)
 }
 
+#[cfg(feature = "float16")]
+pub fn top_level_float16_schema() -> SchemaRef {
+    schema_with_type(DataType::FLOAT16)
+}
+
+#[cfg(feature = "float16")]
+pub fn nested_float16_schema() -> SchemaRef {
+    nested_schema_with_type(DataType::FLOAT16)
+}
+
+#[cfg(feature = "float16")]
+pub fn multiple_float16_schema() -> SchemaRef {
+    multi_schema_with_type(DataType::FLOAT16)
+}
+
 pub fn top_level_variant_schema() -> SchemaRef {
     schema_with_type(DataType::unshredded_variant())
 }

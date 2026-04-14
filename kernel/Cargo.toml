@@ -105,7 +105,7 @@ test-utils = ["prettyprint"]
 # integration-test turns on a particularly heavy test for hdfs-object-store
 integration-test = ["hdfs-native-object-store/integration-test"]
 
-float16 = ["dep:half"]
+float16 = ["dep:half", "test_utils/float16"]
 
 # The default versions for arrow/parquet/object_store
 arrow = ["arrow-58"] # latest arrow version

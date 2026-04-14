@@ -1064,6 +1064,8 @@ async fn test_write_txn_actions() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+// TODO float16 testing; there's infrastructure in the nanosecond timestamps branch we can use once that is merged.
+
 #[tokio::test]
 async fn test_append_timestamp_ntz() -> Result<(), Box<dyn std::error::Error>> {
     // setup tracing

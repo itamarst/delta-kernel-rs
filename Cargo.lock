@@ -4065,6 +4065,7 @@ name = "test_utils"
 version = "0.21.0"
 dependencies = [
  "delta_kernel",
+ "half",
  "itertools 0.14.0",
  "rstest",
  "serde_json",

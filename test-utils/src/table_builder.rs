@@ -42,6 +42,11 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+#[cfg(feature = "float16")]
+use half::f16;
+
+#[cfg(feature = "float16")]
+use delta_kernel::arrow::array::Float16Array;
 use delta_kernel::arrow::array::{
     ArrayRef, BinaryArray, BooleanArray, Date32Array, Decimal128Array, Float32Array, Float64Array,
     Int16Array, Int32Array, Int64Array, Int8Array, RecordBatch, StringArray,
@@ -377,6 +382,13 @@ fn generate_column(arrow_type: &ArrowDataType, rows: usize, base: i32) -> ArrayR
             let values: Vec<i64> = (0..rows).map(|i| (base + i as i32) as i64 * 1000).collect();
             Arc::new(Int64Array::from(values))
         }
+        #[cfg(feature = "float16")]
+        ArrowDataType::Float16 => {
+            let values: Vec<f16> = (0..rows)
+                .map(|i| f16::from_f32(base as f32) + f16::from_f32(i as f32 * 0.5))
+                .collect();
+            Arc::new(Float16Array::from(values))
+        }
         ArrowDataType::Float32 => {
             let values: Vec<f32> = (0..rows).map(|i| base as f32 + i as f32 * 0.5).collect();
             Arc::new(Float32Array::from(values))
@@ -557,6 +569,8 @@ pub(crate) fn default_schema() -> SchemaRef {
         StructField::new("short_col", DataType::SHORT, true),
         StructField::new("int_col", DataType::INTEGER, true),
         StructField::new("long_col", DataType::LONG, true),
+        #[cfg(feature = "float16")]
+        StructField::new("float16_col", DataType::FLOAT16, true),
         StructField::new("float_col", DataType::FLOAT, true),
         StructField::new("double_col", DataType::DOUBLE, true),
         StructField::new("string_col", DataType::STRING, true),

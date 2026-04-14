@@ -595,6 +595,11 @@ mod tests {
     use std::path::PathBuf;
     use std::slice;
 
+    #[cfg(feature = "float16")]
+    use half::f16;
+
+    #[cfg(feature = "float16")]
+    use crate::arrow::array::Float16Array;
     use crate::arrow::array::{
         Array, BinaryArray, BooleanArray, Date32Array, Decimal128Array, Float32Array, Float64Array,
         Int16Array, Int32Array, Int64Array, Int8Array, RecordBatch, StringArray,
@@ -1015,6 +1020,17 @@ mod tests {
                     Arc::new(Int64Array::from(vec![10000i64, 20000, 30000, 40000, 50000]))
                         as Arc<dyn Array>,
                 ),
+                #[cfg(feature = "float16")]
+                // Float (f16)
+                (
+                    "float16_col",
+                    Arc::new(Float16Array::from(
+                        [1.5f32, 2.5, 3.5, 4.5, 5.5]
+                            .into_iter()
+                            .map(f16::from_f32)
+                            .collect::<Vec<f16>>(),
+                    )) as Arc<dyn Array>,
+                ),
                 // Float (f32)
                 (
                     "float_col",
@@ -1129,7 +1145,10 @@ mod tests {
         // Verify the data
         assert_eq!(data.len(), 1);
         assert_eq!(data[0].num_rows(), 5);
-        assert_eq!(data[0].num_columns(), 13);
+        assert_eq!(
+            data[0].num_columns(),
+            13 + cfg!(feature = "float16") as usize
+        );
 
         let mut col_idx = 0;
 
@@ -1168,6 +1187,28 @@ mod tests {
             .unwrap();
         assert_eq!(long_col.values(), &[10000i64, 20000, 30000, 40000, 50000]);
         col_idx += 1;
+
+        #[cfg(feature = "float16")]
+        {
+            // Verify float16 column
+            use half::f16;
+            let float_col = data[0]
+                .column(col_idx)
+                .as_any()
+                .downcast_ref::<Float16Array>()
+                .unwrap();
+            assert_eq!(
+                float_col.values(),
+                &[
+                    f16::from_f32(1.5f32),
+                    f16::from_f32(2.5),
+                    f16::from_f32(3.5),
+                    f16::from_f32(4.5),
+                    f16::from_f32(5.5)
+                ]
+            );
+            col_idx += 1;
+        }
 
         // Verify float column
         let float_col = data[0]

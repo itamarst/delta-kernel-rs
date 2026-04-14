@@ -452,6 +452,14 @@ mod tests {
     #[case::byte_to_long(PrimitiveType::Byte, PrimitiveType::Long, true)]
     #[case::short_to_integer(PrimitiveType::Short, PrimitiveType::Integer, true)]
     #[case::float_to_double(PrimitiveType::Float, PrimitiveType::Double, true)]
+    #[cfg_attr(
+        feature = "float16",
+        case::float16_to_float(PrimitiveType::Float16, PrimitiveType::Float, true)
+    )]
+    #[cfg_attr(
+        feature = "float16",
+        case::float16_to_double(PrimitiveType::Float16, PrimitiveType::Double, true)
+    )]
     #[case::timestamp_to_ntz(PrimitiveType::Timestamp, PrimitiveType::TimestampNtz, true)]
     fn stats_type_compatibility(
         #[case] source: PrimitiveType,

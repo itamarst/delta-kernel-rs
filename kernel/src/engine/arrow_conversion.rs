@@ -271,6 +271,8 @@ impl TryFromArrow<&ArrowDataType> for DataType {
             ArrowDataType::UInt32 => Ok(DataType::INTEGER),
             ArrowDataType::UInt16 => Ok(DataType::SHORT),
             ArrowDataType::UInt8 => Ok(DataType::BYTE),
+            #[cfg(feature = "float16")]
+            ArrowDataType::Float16 => Ok(DataType::FLOAT16),
             ArrowDataType::Float32 => Ok(DataType::FLOAT),
             ArrowDataType::Float64 => Ok(DataType::DOUBLE),
             ArrowDataType::Boolean => Ok(DataType::BOOLEAN),

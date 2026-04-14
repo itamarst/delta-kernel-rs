@@ -10,8 +10,6 @@ use crate::parquet::file::statistics::Statistics;
 use crate::parquet::schema::types::ColumnDescPtr;
 use crate::schema::{DataType, DecimalType, PrimitiveType};
 use chrono::{DateTime, Days};
-#[cfg(feature = "float16")]
-use half::f16;
 use std::collections::HashMap;
 use tracing::debug;
 

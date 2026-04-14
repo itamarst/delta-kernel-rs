@@ -1584,6 +1584,8 @@ impl<'de> serde::Deserialize<'de> for PrimitiveType {
             "integer" => Ok(PrimitiveType::Integer),
             "short" => Ok(PrimitiveType::Short),
             "byte" => Ok(PrimitiveType::Byte),
+            #[cfg(feature = "float16")]
+            "float16" => Ok(PrimitiveType::Float16),
             "float" => Ok(PrimitiveType::Float),
             "double" => Ok(PrimitiveType::Double),
             "boolean" => Ok(PrimitiveType::Boolean),

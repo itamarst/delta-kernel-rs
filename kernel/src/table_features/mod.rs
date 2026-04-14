@@ -20,10 +20,13 @@ pub(crate) use column_mapping::{
     assign_column_mapping_metadata, column_mapping_mode, get_column_mapping_mode_from_properties,
     get_field_column_mapping_info,
 };
+#[cfg(feature = "float16")]
+mod float16;
+#[cfg(feature = "float16")]
+pub(crate) use float16::{schema_contains_float16, validate_float16_feature_support};
 pub(crate) use timestamp_ntz::{
     schema_contains_timestamp_ntz, validate_timestamp_ntz_feature_support,
 };
-// TODO do equivalent for float16 -^
 mod column_mapping;
 mod timestamp_ntz;
 
@@ -133,6 +136,7 @@ pub(crate) enum TableFeature {
     ColumnMapping,
     /// Deletion vectors for merge, update, delete
     DeletionVectors,
+    #[cfg(feature = "float16")]
     /// Float16 primitive datatype:
     Float16,
     /// timestamps without timezone support
@@ -485,6 +489,7 @@ static DELETION_VECTORS_INFO: FeatureInfo = FeatureInfo {
     }),
 };
 
+#[cfg(feature = "float16")]
 #[allow(dead_code)]
 static FLOAT16_INFO: FeatureInfo = FeatureInfo {
     feature_type: FeatureType::ReaderWriter,
@@ -592,7 +597,6 @@ impl TableFeature {
             | TableFeature::CatalogOwnedPreview
             | TableFeature::ColumnMapping
             | TableFeature::DeletionVectors
-            | TableFeature::Float16
             | TableFeature::TimestampWithoutTimezone
             | TableFeature::TypeWidening
             | TableFeature::TypeWideningPreview
@@ -601,6 +605,8 @@ impl TableFeature {
             | TableFeature::VariantType
             | TableFeature::VariantTypePreview
             | TableFeature::VariantShreddingPreview => FeatureType::ReaderWriter,
+            #[cfg(feature = "float16")]
+            TableFeature::Float16 => FeatureType::ReaderWriter,
             TableFeature::AppendOnly
             | TableFeature::DomainMetadata
             | TableFeature::Invariants
@@ -654,6 +660,7 @@ impl TableFeature {
             TableFeature::CatalogOwnedPreview => &CATALOG_OWNED_PREVIEW_INFO,
             TableFeature::ColumnMapping => &COLUMN_MAPPING_INFO,
             TableFeature::DeletionVectors => &DELETION_VECTORS_INFO,
+            #[cfg(feature = "float16")]
             TableFeature::Float16 => &FLOAT16_INFO,
             TableFeature::TimestampWithoutTimezone => &TIMESTAMP_WITHOUT_TIMEZONE_INFO,
             TableFeature::TypeWidening => &TYPE_WIDENING_INFO,
@@ -791,6 +798,7 @@ mod tests {
                 TableFeature::CatalogOwnedPreview => "catalogOwned-preview",
                 TableFeature::ColumnMapping => "columnMapping",
                 TableFeature::DeletionVectors => "deletionVectors",
+                #[cfg(feature = "float16")]
                 TableFeature::Float16 => "float16",
                 TableFeature::TimestampWithoutTimezone => "timestampNtz",
                 TableFeature::TypeWidening => "typeWidening",

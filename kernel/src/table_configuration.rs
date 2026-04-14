@@ -21,6 +21,8 @@ use crate::scan::data_skipping::stats_schema::{
 };
 pub(crate) use crate::schema::variant_utils::validate_variant_type_feature_support;
 use crate::schema::{schema_has_invariants, SchemaRef, StructField, StructType};
+#[cfg(feature = "float16")]
+use crate::table_features::validate_float16_feature_support;
 use crate::table_features::{
     column_mapping_mode, get_any_level_column_physical_name,
     validate_timestamp_ntz_feature_support, ColumnMappingMode, EnablementCheck, FeatureRequirement,
@@ -170,6 +172,9 @@ impl TableConfiguration {
         // Validate schema against protocol features now that we have a TC instance.
         validate_timestamp_ntz_feature_support(&table_config)?;
         validate_variant_type_feature_support(&table_config)?;
+
+        #[cfg(feature = "float16")]
+        validate_float16_feature_support(&table_config)?;
 
         Ok(table_config)
     }

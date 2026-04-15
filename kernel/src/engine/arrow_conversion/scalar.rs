@@ -14,6 +14,8 @@
 // extraction into StructData/ArrayData/MapData when there is a concrete use case.
 
 use crate::arrow::array::cast::AsArray;
+#[cfg(feature = "float16")]
+use crate::arrow::array::types::Float16Type;
 use crate::arrow::array::types::{
     Date32Type, Decimal128Type, Float32Type, Float64Type, Int16Type, Int32Type, Int64Type,
     Int8Type, TimestampMicrosecondType,
@@ -62,6 +64,10 @@ pub fn extract_primitive_scalar(array: &dyn Array, row_idx: usize) -> DeltaResul
         )),
         ArrowDataType::Int64 => Ok(Scalar::Long(
             array.as_primitive::<Int64Type>().value(row_idx),
+        )),
+        #[cfg(feature = "float16")]
+        ArrowDataType::Float16 => Ok(Scalar::Float16(
+            array.as_primitive::<Float16Type>().value(row_idx),
         )),
         ArrowDataType::Float32 => Ok(Scalar::Float(
             array.as_primitive::<Float32Type>().value(row_idx),
@@ -137,6 +143,8 @@ fn arrow_primitive_to_kernel_type(arrow_type: &ArrowDataType) -> DeltaResult<Dat
         ArrowDataType::Int16 => Ok(DataType::SHORT),
         ArrowDataType::Int32 => Ok(DataType::INTEGER),
         ArrowDataType::Int64 => Ok(DataType::LONG),
+        #[cfg(feature = "float16")]
+        ArrowDataType::Float16 => Ok(DataType::FLOAT16),
         ArrowDataType::Float32 => Ok(DataType::FLOAT),
         ArrowDataType::Float64 => Ok(DataType::DOUBLE),
         ArrowDataType::Boolean => Ok(DataType::BOOLEAN),
@@ -166,6 +174,8 @@ fn arrow_primitive_to_kernel_type(arrow_type: &ArrowDataType) -> DeltaResult<Dat
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "float16")]
+    use crate::arrow::array::Float16Array;
     use crate::arrow::array::{
         new_null_array, ArrayRef, BinaryArray, BooleanArray, Date32Array, Decimal128Array,
         Float32Array, Float64Array, Int16Array, Int32Array, Int64Array, Int8Array,
@@ -176,6 +186,8 @@ mod tests {
     use crate::partition::serialization::serialize_partition_value;
     use crate::schema::PrimitiveType;
 
+    #[cfg(feature = "float16")]
+    use half::f16;
     use rstest::rstest;
     use std::sync::Arc;
 
@@ -191,6 +203,7 @@ mod tests {
         Arc::new(Int64Array::from(vec![9_876_543_210i64])) as ArrayRef,
         Scalar::Long(9_876_543_210)
     )]
+    #[cfg_attr(feature = "float16", case::float16(Arc::new(Float16Array::from(vec![f16::from_f32(1.25)])) as ArrayRef, Scalar::Float16(f16::from_f32(1.25))))]
     #[case::float(Arc::new(Float32Array::from(vec![1.25f32])) as ArrayRef, Scalar::Float(1.25))]
     #[case::double(
         Arc::new(Float64Array::from(vec![99.99f64])) as ArrayRef,
@@ -238,10 +251,13 @@ mod tests {
     // ============================================================================
 
     #[rstest]
+    #[cfg_attr(feature = "float16", case::float16_neg_zero(Arc::new(Float16Array::from(vec![f16::from_f32(-0.0)])) as ArrayRef))]
     #[case::float_neg_zero(Arc::new(Float32Array::from(vec![-0.0f32])) as ArrayRef)]
     #[case::double_neg_zero(Arc::new(Float64Array::from(vec![-0.0f64])) as ArrayRef)]
     fn test_extract_primitive_scalar_negative_zero_preserves_sign(#[case] array: ArrayRef) {
         match extract_primitive_scalar(array.as_ref(), 0).unwrap() {
+            #[cfg(feature = "float16")]
+            Scalar::Float16(v) => assert!(v.is_sign_negative() && v == f16::from_f32(0.0)),
             Scalar::Float(v) => assert!(v.is_sign_negative() && v == 0.0),
             Scalar::Double(v) => assert!(v.is_sign_negative() && v == 0.0),
             other => panic!("expected Float or Double, got {other:?}"),
@@ -249,10 +265,13 @@ mod tests {
     }
 
     #[rstest]
+    #[cfg_attr(feature = "float16", case::float16_nan(Arc::new(Float16Array::from(vec![f16::NAN])) as ArrayRef))]
     #[case::float_nan(Arc::new(Float32Array::from(vec![f32::NAN])) as ArrayRef)]
     #[case::double_nan(Arc::new(Float64Array::from(vec![f64::NAN])) as ArrayRef)]
     fn test_extract_primitive_scalar_nan_returns_nan(#[case] array: ArrayRef) {
         match extract_primitive_scalar(array.as_ref(), 0).unwrap() {
+            #[cfg(feature = "float16")]
+            Scalar::Float16(v) => assert!(v.is_nan()),
             Scalar::Float(v) => assert!(v.is_nan()),
             Scalar::Double(v) => assert!(v.is_nan()),
             other => panic!("expected Float or Double NaN, got {other:?}"),
@@ -260,10 +279,18 @@ mod tests {
     }
 
     #[rstest]
+    #[cfg_attr(feature = "float16", case::float16_inf(
+        Arc::new(Float16Array::from(vec![f16::INFINITY])) as ArrayRef,
+        Scalar::Float16(f16::INFINITY)
+    ))]
     #[case::float_inf(
         Arc::new(Float32Array::from(vec![f32::INFINITY])) as ArrayRef,
         Scalar::Float(f32::INFINITY)
     )]
+    #[cfg_attr(feature = "float16", case::float16_neg_inf(
+        Arc::new(Float16Array::from(vec![f16::NEG_INFINITY])) as ArrayRef,
+        Scalar::Float16(f16::NEG_INFINITY)
+    ))]
     #[case::float_neg_inf(
         Arc::new(Float32Array::from(vec![f32::NEG_INFINITY])) as ArrayRef,
         Scalar::Float(f32::NEG_INFINITY)
@@ -379,6 +406,10 @@ mod tests {
     #[case::int16(ArrowDataType::Int16, DataType::SHORT)]
     #[case::int32(ArrowDataType::Int32, DataType::INTEGER)]
     #[case::int64(ArrowDataType::Int64, DataType::LONG)]
+    #[cfg_attr(
+        feature = "float16",
+        case::float16(ArrowDataType::Float16, DataType::FLOAT16)
+    )]
     #[case::float32(ArrowDataType::Float32, DataType::FLOAT)]
     #[case::float64(ArrowDataType::Float64, DataType::DOUBLE)]
     #[case::boolean(ArrowDataType::Boolean, DataType::BOOLEAN)]
@@ -562,6 +593,9 @@ mod tests {
     #[case::binary_utf8(Arc::new(BinaryArray::from_vec(vec![b"Hello"])) as ArrayRef)]
     #[case::large_utf8(Arc::new(LargeStringArray::from(vec!["large"])) as ArrayRef)]
     #[case::large_binary(Arc::new(LargeBinaryArray::from(vec![b"large".as_ref()])) as ArrayRef)]
+    #[cfg_attr(feature = "float16", case::float16_normal(Arc::new(Float16Array::from(vec![f16::from_f32(1.25)])) as ArrayRef))]
+    #[cfg_attr(feature = "float16", case::float16_inf(Arc::new(Float16Array::from(vec![f16::INFINITY])) as ArrayRef))]
+    #[cfg_attr(feature = "float16", case::float16_neg_inf(Arc::new(Float16Array::from(vec![f16::NEG_INFINITY])) as ArrayRef))]
     #[case::float_normal(Arc::new(Float32Array::from(vec![1.25f32])) as ArrayRef)]
     #[case::float_inf(Arc::new(Float32Array::from(vec![f32::INFINITY])) as ArrayRef)]
     #[case::float_neg_inf(Arc::new(Float32Array::from(vec![f32::NEG_INFINITY])) as ArrayRef)]
@@ -583,6 +617,7 @@ mod tests {
 
     // NaN does not equal itself, so we verify the roundtrip preserves NaN-ness separately.
     #[rstest]
+    #[cfg_attr(feature = "float16", case::float16_nan(Arc::new(Float16Array::from(vec![f16::NAN])) as ArrayRef))]
     #[case::float_nan(Arc::new(Float32Array::from(vec![f32::NAN])) as ArrayRef)]
     #[case::double_nan(Arc::new(Float64Array::from(vec![f64::NAN])) as ArrayRef)]
     fn test_roundtrip_nan_serialize_parse_returns_nan(#[case] array: ArrayRef) {
@@ -593,6 +628,8 @@ mod tests {
         let primitive_type = arrow_to_primitive_type(array.data_type());
         let parsed = primitive_type.parse_scalar(&serialized).unwrap();
         match parsed {
+            #[cfg(feature = "float16")]
+            Scalar::Float16(v) => assert!(v.is_nan(), "expected NaN float16"),
             Scalar::Float(v) => assert!(v.is_nan(), "expected NaN float"),
             Scalar::Double(v) => assert!(v.is_nan(), "expected NaN double"),
             other => panic!("expected float/double NaN, got {other:?}"),

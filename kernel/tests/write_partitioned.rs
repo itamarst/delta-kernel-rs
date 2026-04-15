@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use chrono::{NaiveDate, NaiveDateTime, TimeZone, Utc};
+#[cfg(feature = "float16")]
+use delta_kernel::arrow::array::Float16Array;
 use delta_kernel::arrow::array::{
     Array, ArrayRef, BinaryArray, BooleanArray, Date32Array, Decimal128Array, Float32Array,
     Float64Array, Int16Array, Int32Array, Int64Array, Int8Array, RecordBatch, StringArray,
@@ -18,6 +20,8 @@ use delta_kernel::table_features::ColumnMappingMode;
 use delta_kernel::transaction::create_table::create_table;
 use delta_kernel::transaction::data_layout::DataLayout;
 use delta_kernel::Snapshot;
+#[cfg(feature = "float16")]
+use half::f16;
 use rstest::rstest;
 use test_utils::{read_scan, test_table_setup_mt};
 use url::Url;
@@ -41,7 +45,10 @@ async fn test_write_partitioned_normal_values_roundtrip(
     let schema = all_types_schema();
     let arrow_schema: Arc<ArrowSchema> = Arc::new(schema.as_ref().try_into_arrow()?);
     let snapshot = create_all_types_table(&table_path, engine.as_ref(), cm_mode)?;
-    assert_eq!(snapshot.table_configuration().partition_columns().len(), 13);
+    assert_eq!(
+        snapshot.table_configuration().partition_columns().len(),
+        13 + cfg!(feature = "float16") as usize
+    );
 
     let batch = RecordBatch::try_new(arrow_schema, normal_arrow_columns())?;
     let snapshot = test_utils::write_batch_to_table(
@@ -228,6 +235,8 @@ fn all_types_schema() -> Arc<StructType> {
             StructField::nullable("p_decimal", DataType::decimal(10, 2).unwrap()),
             StructField::nullable("p_binary", DataType::BINARY),
             StructField::nullable("p_timestamp_ntz", DataType::TIMESTAMP_NTZ),
+            #[cfg(feature = "float16")]
+            StructField::nullable("p_float16", DataType::FLOAT16),
         ])
         .unwrap(),
     )
@@ -247,6 +256,8 @@ const PARTITION_COLS: &[&str] = &[
     "p_decimal",
     "p_binary",
     "p_timestamp_ntz",
+    #[cfg(feature = "float16")]
+    "p_float16",
 ];
 
 // ==============================================================================
@@ -271,6 +282,8 @@ fn normal_arrow_columns() -> Vec<ArrayRef> {
         decimal_array(12345, 10, 2),
         Arc::new(BinaryArray::from_vec(vec![b"Hello"])),
         ts_ntz_array(ts),
+        #[cfg(feature = "float16")]
+        Arc::new(Float16Array::from(vec![f16::from_f32(1.25f32)])),
     ]
 }
 
@@ -291,6 +304,8 @@ fn normal_partition_values() -> Result<HashMap<String, Scalar>, Box<dyn std::err
         ("p_decimal".into(), Scalar::decimal(12345, 10, 2)?),
         ("p_binary".into(), Scalar::Binary(b"Hello".to_vec())),
         ("p_timestamp_ntz".into(), Scalar::TimestampNtz(ts)),
+        #[cfg(feature = "float16")]
+        ("p_float16".into(), Scalar::Float16(f16::from_f32(1.25))),
     ]))
 }
 
@@ -309,6 +324,8 @@ const EXPECTED_NORMAL_PVS: &[(&str, &str)] = &[
     ("p_decimal", "123.45"),
     ("p_binary", "Hello"),
     ("p_timestamp_ntz", "2025-03-31 15:30:00.123456"),
+    #[cfg(feature = "float16")]
+    ("p_float16", "1.25"),
 ];
 
 // ==============================================================================
@@ -336,6 +353,8 @@ fn null_arrow_columns() -> Vec<ArrayRef> {
         ),
         Arc::new(BinaryArray::from(vec![None::<&[u8]>])),
         Arc::new(TimestampMicrosecondArray::from(vec![None::<i64>])),
+        #[cfg(feature = "float16")]
+        Arc::new(Float16Array::from(vec![None::<f16>])),
     ]
 }
 
@@ -358,6 +377,8 @@ fn null_partition_values() -> Result<HashMap<String, Scalar>, Box<dyn std::error
             "p_timestamp_ntz".into(),
             Scalar::Null(DataType::TIMESTAMP_NTZ),
         ),
+        #[cfg(feature = "float16")]
+        ("p_float16".into(), Scalar::Null(DataType::FLOAT16)),
     ]))
 }
 
@@ -410,12 +431,18 @@ fn assert_normal_values(sorted: &RecordBatch) {
         b"Hello"
     );
     assert_col!(sorted, 13, TimestampMicrosecondArray, ts); // p_timestamp_ntz
+    #[cfg(feature = "float16")]
+    assert_col!(sorted, 14, Float16Array, f16::from_f32(1.25f32)); // p_float16
 }
 
 /// Asserts all partition columns (indices 1-13) are null for the single row.
 fn assert_all_partition_columns_null(sorted: &RecordBatch) {
     assert_eq!(sorted.num_rows(), 1);
-    for col_idx in 1..=13 {
+    let mut num_columns = 13;
+    if cfg!(feature = "float16") {
+        num_columns += 1;
+    }
+    for col_idx in 1..=num_columns {
         assert!(
             sorted.column(col_idx).is_null(0),
             "partition column at index {col_idx} ({}) should be null",
